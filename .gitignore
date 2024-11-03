@@ -1,0 +1,7 @@
+# intermediate LaTeX files
+aux
+
+# Python files
+venv
+__pycache__
+
