@@ -1,3 +1,6 @@
+# actual data files
+src/datasets/data
+
 # intermediate LaTeX files
 aux
 
