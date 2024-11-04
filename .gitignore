@@ -1,5 +1,5 @@
 # actual data files
-src/datasets/data
+data
 
 # intermediate LaTeX files
 aux

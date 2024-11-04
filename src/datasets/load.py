@@ -25,6 +25,13 @@ from datasets.config import DATASET_CONFIGS
 from datasets.types import AvailableSplits, Split
 
 
+# Get project root directory (2 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+
+# Default data directory is under project root
+DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
+
+
 def _get_split_seed(dataset_name: str, split: Split, base_seed: int) -> int:
     """
     Generate a deterministic seed for a specific split.
@@ -79,7 +86,7 @@ def create_split(
 def get_dataset(
     dataset_name: str,
     split: Split = Split.FULL,
-    root: Union[str, Path] = "./data",
+    root: Union[str, Path] = DEFAULT_DATA_DIR,
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = True,
@@ -111,6 +118,7 @@ def get_dataset(
     """
     config = DATASET_CONFIGS[dataset_name]
     dataset_cls: Type[VisionDataset] = getattr(torchvision.datasets, dataset_name)
+
 
     # Common parameters supported across all dataset instantiations
     common_params = {
