@@ -15,6 +15,8 @@
     \href{#2}{\texttt{#1}}
 }
 
+\newcommand{\ImageNet}{\dataset{ImageNet}{https://www.image-net.org/about.php}}
+
 \begin{document}
 \maketitle
 
@@ -23,7 +25,7 @@
 Comparing the performance of different machine learning (ML) algorithms in practice
 is made difficult by the cost of evaluating a given model. A single training
 run, even on a GPU in an academic compute cluster, may take upwards of 2 days
-for common image classification benchmark datasets like ImageNet. These compute
+for common image classification benchmark datasets like \ImageNet. These compute
 requirements naturally limit the extent to which budget-constrained researchers
 can systematically compare proposed novel techniques to state-of-the-art
 baselines. Rather than running a proposed algorithm head-to-head with a
@@ -65,8 +67,15 @@ benchmarks?
 
 \section*{Plan}
 
-The subjects of this experiment will be $28$ common ML datasets, details in 
-the Appendix.
+The subjects of this experiment will be $D = 30$ common supervised image classification
+datasets.
+
+I selected these from a collection of open-access datasets made available
+through the ML Python package \texttt{torchvision}. I restricted to datasets
+whose task was image classification, meaning a ML model should input an image
+and output an integer representing the ``class'' to which the image should
+belong. I also removed from consideration datasets that would take too long to
+train on, like the aforementioned \ImageNet dataset.
 
 
 \newpage

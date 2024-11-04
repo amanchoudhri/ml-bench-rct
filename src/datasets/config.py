@@ -14,78 +14,94 @@ from datasets.types import AvailableSplits, DatasetConfig, Split
 
 # Dataset configurations
 DATASET_CONFIGS = {
-    # No split datasets
+    # -- NO SPLITS --
+    # Datasets with no splits provided out of the box
     'SEMEION': DatasetConfig(AvailableSplits.NONE),
     'SUN397': DatasetConfig(AvailableSplits.NONE),
     'Caltech101': DatasetConfig(AvailableSplits.NONE),
     'Caltech256': DatasetConfig(AvailableSplits.NONE),
     'EuroSAT': DatasetConfig(AvailableSplits.NONE),
     
-    # Train/test split datasets
-    'Food101': DatasetConfig(AvailableSplits.TRAIN_TEST),
-    'GTSRB': DatasetConfig(AvailableSplits.TRAIN_TEST),
-    'StanfordCars': DatasetConfig(AvailableSplits.TRAIN_TEST, supports_download=False),
-    'FER2013': DatasetConfig(AvailableSplits.TRAIN_TEST, supports_download=False),
-    'SVHN': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/extra, but we ignore extra.
-    'LFWPeople': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/10fold, but ignore 10fold.
-    'STL10': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/unlabeled/train+unlabeled
-    
-    # Train/test datasets that use `train: bool` kwarg in the constructor
-    'MNIST': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'FashionMNIST': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'KMNIST': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'QMNIST': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'USPS': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'CIFAR10': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'CIFAR100': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
-    'EMNIST': DatasetConfig(
-        AvailableSplits.TRAIN_TEST,
-        uses_train_param=True,
+    # -- TRAIN/TEST --
+    # Datasets providing train/test, which use `train: bool` in the constructor
+    'MNIST': DatasetConfig.with_train_param(),
+    'FashionMNIST': DatasetConfig.with_train_param(),
+    'KMNIST': DatasetConfig.with_train_param(),
+    'QMNIST': DatasetConfig.with_train_param(),
+    'USPS':DatasetConfig.with_train_param(),
+    'CIFAR10': DatasetConfig.with_train_param(),
+    'CIFAR100': DatasetConfig.with_train_param(),
+    'EMNIST': DatasetConfig.with_train_param(
+        # EMNIST has 6 different splits with various numbers of
+        # observations, balanced in different ways across classes.
+        # For more information, see:
+        # https://www.nist.gov/itl/products-and-services/emnist-dataset
         extra_params={'split': 'bymerge'}
         ),
 
-    # Train/val/test split
-    'DTD': DatasetConfig(AvailableSplits.TRAIN_VAL_TEST),
-    'Flowers102': DatasetConfig(AvailableSplits.TRAIN_VAL_TEST),
-    'PCAM': DatasetConfig(AvailableSplits.TRAIN_VAL_TEST),
-    'RenderedSST2': DatasetConfig(AvailableSplits.TRAIN_VAL_TEST),
-    'FGVCAircraft': DatasetConfig(AvailableSplits.TRAIN_VAL_TEST),
+    # Datasets providing train/test, using standard split names
+    'Food101': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST),
+    'GTSRB': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST),
+    'StanfordCars': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST, supports_download=False),
+    'FER2013': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST, supports_download=False),
+    'SVHN': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST), # really train/test/extra, but we ignore extra.
+    'LFWPeople': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST), # really train/test/10fold, but ignore 10fold.
+    'STL10': DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST), # really train/test/unlabeled/train+unlabeled
 
-    # Train/valid/test split
-    'Country211': DatasetConfig(
-        AvailableSplits.TRAIN_VAL_TEST,
-        split_names={Split.VAL: 'valid'}
-        ),
-    'CelebA': DatasetConfig(
-        AvailableSplits.TRAIN_VAL_TEST,
-        split_names={Split.VAL: 'valid'},
-        extra_params={'target_type': 'identity'}
-        ),
-
-    # CUSTOM
-    'Imagenette': DatasetConfig(
+    # Datasets providing train/test, with custom split names
+    'Imagenette': DatasetConfig.with_split_names(
         AvailableSplits.TRAIN_TEST,
-        split_names={Split.TEST: 'val'}
+        name_overrides={Split.TEST: 'val'}
         ),
-    'Places365': DatasetConfig(
+    'Places365': DatasetConfig.with_split_names(
         AvailableSplits.TRAIN_TEST,
-        split_names={
+        name_overrides={
             Split.TRAIN: 'train-standard',
             Split.TEST: 'val'
             }
         ),
-    'INaturalist': DatasetConfig(
+    'INaturalist': DatasetConfig.with_split_names(
         AvailableSplits.TRAIN_TEST,
-        split_names={
+        name_overrides={
             Split.TRAIN: '2021_train',
             Split.TEST: '2021_valid'
             }
         ),
-    'OxfordIIITPet': DatasetConfig(
+    'OxfordIIITPet': DatasetConfig.with_split_names(
         AvailableSplits.TRAIN_TEST,
-        split_names={
+        name_overrides={
             Split.TRAIN: 'trainval',
             Split.TEST: 'test'
             }
+        ),
+    # Omniglot requires a custom parameter, `background`
+    # to specify train or test
+    "Omniglot": DatasetConfig(
+        available_splits=AvailableSplits.TRAIN_TEST,
+        split_params={
+            "background": {
+                Split.TRAIN: True,
+                Split.TEST: False
+            }
+        }
+    ),
+
+    # -- TRAIN/VAL/TEST --
+    # Datasets providing train/val/test with standard naming
+    'DTD': DatasetConfig.with_split_names(AvailableSplits.TRAIN_VAL_TEST),
+    'Flowers102': DatasetConfig.with_split_names(AvailableSplits.TRAIN_VAL_TEST),
+    'PCAM': DatasetConfig.with_split_names(AvailableSplits.TRAIN_VAL_TEST),
+    'RenderedSST2': DatasetConfig.with_split_names(AvailableSplits.TRAIN_VAL_TEST),
+    'FGVCAircraft': DatasetConfig.with_split_names(AvailableSplits.TRAIN_VAL_TEST),
+
+    # Datasets providing train/val/test, where val is called 'valid'
+    'Country211': DatasetConfig.with_split_names(
+        AvailableSplits.TRAIN_VAL_TEST,
+        name_overrides={Split.VAL: 'valid'}
+        ),
+    'CelebA': DatasetConfig.with_split_names(
+        AvailableSplits.TRAIN_VAL_TEST,
+        name_overrides={Split.VAL: 'valid'},
+        extra_params={'target_type': 'identity'}
         ),
 }
