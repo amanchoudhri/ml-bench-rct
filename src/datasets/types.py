@@ -30,18 +30,40 @@ class AvailableSplits(Enum):
     TRAIN_VAL_TEST = {Split.TRAIN, Split.TEST}
 
 
+DEFAULT_SPLIT_NAMES = {
+    Split.TRAIN: "train",
+    Split.VAL: "val",
+    Split.TEST: "test"
+}
+
+
 @dataclass
 class DatasetConfig:
-    """Dataset configuration"""
+    """
+    Dataset configuration
+    
+    Args:
+        available_splits: Enum indicating which splits are natively available
+        supports_download: Whether the dataset supports downloading
+        uses_train_param: Whether dataset uses train=True/False kwarg
+        split_names: Dict mapping Split enum to dataset-specific split names.
+                    Updates (not replaces) the default names.
+        extra_params: Additional parameters to pass to dataset constructor
+    """
     available_splits: AvailableSplits
     supports_download: bool = True
     uses_train_param: bool = False  # Whether dataset uses train=True/False kwarg
-    split_names: Dict[Split, str] = field(default_factory=lambda: {
-        Split.TRAIN: "train",
-        Split.VAL: "val",
-        Split.TEST: "test"
-    })
+    split_names: Dict[Split, str] = field(default_factory=dict)
     extra_params: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        """Merge provided split_names with defaults after initialization"""
+        # Create a new dict with defaults
+        merged_names = DEFAULT_SPLIT_NAMES.copy()
+        # Update with any custom names provided
+        merged_names.update(self.split_names)
+        # Replace the split_names with merged version
+        self.split_names = merged_names
 
     def get_kwargs(self, split: Split) -> Dict[str, Any]:
         """Get the kwargs needed to request this split from the dataset"""
