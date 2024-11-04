@@ -93,7 +93,7 @@ def get_dataset(
     val_ratio: float = 0.1,
     test_ratio: float = 0.1,
     seed: int = 42
-) -> Dataset:
+) -> VisionDataset | ConcatDataset:
     """
     Load a dataset with consistent split handling.
 
@@ -128,6 +128,11 @@ def get_dataset(
     }
 
     if config.supports_download:
+        # Hotfix for known issue in torchvision where the download = True flag
+        # raises a RuntimeError if Imagenette is already downloaded
+        # https://github.com/pytorch/vision/pull/8681
+        if dataset_name == "Imagenette":
+            download = False
         common_params["download"] = download
 
     def get_native_split(split: Split) -> VisionDataset:

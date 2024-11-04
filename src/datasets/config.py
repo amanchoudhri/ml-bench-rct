@@ -20,10 +20,6 @@ DATASET_CONFIGS = {
     'Caltech101': DatasetConfig(AvailableSplits.NONE),
     'Caltech256': DatasetConfig(AvailableSplits.NONE),
     'EuroSAT': DatasetConfig(AvailableSplits.NONE),
-     # TODO: needs `ann_file` kwarg.
-    'Flickr8k': DatasetConfig(AvailableSplits.NONE, supports_download=False),
-     # TODO: needs `ann_file` kwarg.
-    'Flickr30k': DatasetConfig(AvailableSplits.NONE, supports_download=False),
     
     # Train/test split datasets
     'Food101': DatasetConfig(AvailableSplits.TRAIN_TEST),
@@ -32,6 +28,7 @@ DATASET_CONFIGS = {
     'FER2013': DatasetConfig(AvailableSplits.TRAIN_TEST, supports_download=False),
     'SVHN': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/extra, but we ignore extra.
     'LFWPeople': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/10fold, but ignore 10fold.
+    'STL10': DatasetConfig(AvailableSplits.TRAIN_TEST), # really train/test/unlabeled/train+unlabeled
     
     # Train/test datasets that use `train: bool` kwarg in the constructor
     'MNIST': DatasetConfig(AvailableSplits.TRAIN_TEST, uses_train_param=True),
