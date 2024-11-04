@@ -3,6 +3,8 @@
 
 \usepackage[letterpaper, margin=1in]{geometry}
 
+\usepackage{booktabs}
+
 \usepackage{hyperref}
 
 \title{POLS 4724: Practicum Pre-Analysis Plan}
@@ -16,11 +18,55 @@
 \begin{document}
 \maketitle
 
+\section*{Motivation}
+
+Comparing the performance of different machine learning (ML) algorithms in practice
+is made difficult by the cost of evaluating a given model. A single training
+run, even on a GPU in an academic compute cluster, may take upwards of 2 days
+for common image classification benchmark datasets like ImageNet. These compute
+requirements naturally limit the extent to which budget-constrained researchers
+can systematically compare proposed novel techniques to state-of-the-art
+baselines. Rather than running a proposed algorithm head-to-head with a
+baseline on a variety of benchmark datasets, researchers may be forced to limit
+the scope of their comparisons to just a few hand-picked datasets—which they
+hope will be illustrative of algorithm performance as a whole.
+
+This may be viewed as a problem of ``superpopulation inference.'' Formally,
+researchers observe some performance difference between two algorithms on some
+subset $d \ll D$ of some available set of $D$ benchmarks, and hope that their
+estimates satisfy $\hat{\tau}_d \approx \hat{\tau}_D$. Of course, this poses some problems.
+The subset $d$ may not be ``representative'' of the broader set of benchmarks $D$, by which
+I mean that observed performance improvement from algorithms on $d$ may fail to hold
+true on $D$ in general. This issue makes it hard to declare categorically that any
+one algorithm is better than another.
+
+% Complicating this problem is an issue of \emph{hyperparameters}, tunable configuration
+% options that a researcher can specify to modify the behavior of any given algorithm. It's
+% often found in practice that identifying an optimal hyperparameter configuration
+% is crucial
+
+In this practicum, I propose a somewhat silly idea to alleviate the
+computational burden of systematic performance comparisons: randomized
+experimentation. I describe this idea as silly, because in this case we may
+reasonably be able to observe both potential outcomes. We might run two
+different ML algorithms on the same dataset, obtain performance measurements
+$Y_i^{(0)}, Y_i^{(1)}$, and compare them as if they were potential outcomes to
+observe a true ``individual treatment effect.'' But I maintain that it is
+nonetheless an interesting question to study how we should best allocate a
+fixed evaluation budget across models and benchmark datasets, assuming we
+cannot run all our models of interest on all our datasets. 
+
+Specifically, my question of interest is the following: can a randomized
+experiment in which $D$ benchmark datasets are randomly assigned to two
+different ML algorithms, $z \in \left\{ 0, 1 \right\}$, recover the true
+performance difference between $z = 0$ and $z = 1$ better than an exact
+performance difference observation on a handpicked finite subset $d$ of the
+benchmarks?
+
 \section*{Plan}
 
-Modern machine learning algorithms are often quite expensive to evaluate.
-
-The subjects of this experiment will be $D$ common machine learning datasets.
+The subjects of this experiment will be $28$ common ML datasets, details in 
+the Appendix.
 
 
 \newpage
@@ -30,13 +76,7 @@ The subjects of this experiment will be $D$ common machine learning datasets.
 \subsection*{Datasets}
 
 
-
-\begin{center}
-    \begin{tabular}{c|c|c|c|c}
-        Dataset & Category & Training Set Size ($N_i$) & Classes ($K_i$) & Image Size ($D_i$) \\
-        \hline
-    \end{tabular}
-\end{center}
+\input{generated/dataset_table}
 
 \newpage
 
