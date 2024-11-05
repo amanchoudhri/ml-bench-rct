@@ -4,7 +4,7 @@ Exploring ML model comparison through randomized experimentation.
 
 ## Overview
 
-This class project for POLS 4724 (Political Science Practicum) investigates an alternative approach to comparing machine learning models under computational constraints. When evaluating ML algorithms, researchers often face a fixed computational budget that prevents running all models on all available benchmark datasets. The conventional approach is to select a subset of benchmarks and evaluate all models on that subset. However, this may fail to capture performance differences that only emerge on the unused datasets.
+This project for [Prof. Don Green](https://donaldgreen.com/)'s randomized experimentation class at Columbia (POLS 4724) investigates an alternative approach to comparing machine learning models under computational constraints. When evaluating ML algorithms, researchers often face a fixed computational budget that prevents running all models on all available benchmark datasets. The conventional approach is to select a subset of benchmarks and evaluate all models on that subset. However, this may fail to capture performance differences that only emerge on the unused datasets.
 
 This project explores an unconventional alternative: using randomized controlled trials (RCTs) to allocate datasets to models. Given a fixed evaluation budget and a desire to understand model performance across a variety of contexts, we investigate whether random assignment might better recover true performance differences compared to the traditional approach of running all models on a smaller, selected subset of benchmarks.
 
