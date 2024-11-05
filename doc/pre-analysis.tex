@@ -4,8 +4,16 @@
 \usepackage[letterpaper, margin=1in]{geometry}
 
 \usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
 
 \usepackage{hyperref}
+
+\bibliographystyle{plain}
 
 \title{POLS 4724: Practicum Pre-Analysis Plan}
 \author{Aman Choudhri}
@@ -16,6 +24,22 @@
 }
 
 \newcommand{\ImageNet}{\dataset{ImageNet}{https://www.image-net.org/about.php}}
+
+\lstdefinestyle{R}{
+    language=R,
+    basicstyle=\small\ttfamily,
+    commentstyle=\color{green!60!black},
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    rulecolor=\color{black},
+}
+\renewcommand{\lstlistingname}{Code}
 
 \begin{document}
 \maketitle
@@ -67,17 +91,117 @@ benchmarks?
 
 \section*{Plan}
 
-The subjects of this experiment will be $D = 30$ common supervised image classification
-datasets.
+The subjects of this experiment will be $D = 30$ common supervised image
+classification datasets. Our outcome of interest is the test-set classification
+accuracy of an ML model trained on the dataset, and the choice of model will
+represent our treatment/control conditions.
 
-I selected these from a collection of open-access datasets made available
+\subsection*{Subjects}
+I selected these datasets from a collection of open-access datasets made available
 through the ML Python package \texttt{torchvision}. I restricted to datasets
 whose task was image classification, meaning a ML model should input an image
 and output an integer representing the ``class'' to which the image should
 belong. I also removed from consideration datasets that would take too long to
 train on, like the aforementioned \ImageNet dataset.
 
+For each dataset, we have the following covariates: number of images, number of
+classes, and average image size. All are measured pre-treatment. Since images
+are often of different shapes, we'll define the computed covariate $S_i$ as
+average number of pixels in the image, which we compute by multiplying the
+width and height.
 
+
+\subsection*{Treatment}
+The control condition in this experiment is the convolutional neural network
+(CNN) architecture, which was introduced in 1998
+\cite{lecunGradientbasedLearningApplied1998} and popularized in 2012
+\cite{krizhevskyImageNetClassificationDeep2012}. It remains one of the most
+popular neural network setups for image processing to this day. We'll denote it
+by $z = 0$. The treatment condition, written as $z = 1$, is the more novel
+vision transformer (ViT) architecture \cite{dosovitskiyImageWorth16x162021},
+introduced in 2020.
+
+\subsection*{Outcome}
+For each dataset $i$, our outcomes of interest are $Y_i(0)$ and $Y_i(1)$, the
+classification accuracies of the assigned model on an unseen test set.
+Specifically, a given model will be trained only on a \emph{subset} of a
+dataset $i$, with the rest of the data set aside and dubbed the ``test set.''
+After training, then, the model will produce predicted class assignments for
+each unseen image in the test set. The classification accuracy is simply the
+proportion of correct class assignments by the model. Since the outcome is a proportion,
+we note that $0 \leq Y_i(z) \leq 1$.
+
+\subsection*{Randomization}
+Since we have access to covariates from the datasets, we will use blocked
+random assignment. One covariate in particular is relevant here, what I'll call
+the \emph{richness}: the average number of images per class. Roughly speaking,
+the more images there are available for each class, the easier the task since
+there is more information available for the model to pull from. I'll block on
+richness thresholding at 100 examples per class, since there are comparatively
+few datasets in that regime and I want to make sure we try both models on those
+kinds of datasets. This results in the following group sizes:
+
+\input{generated/richness_blocking_table.tex}
+
+We'll use complete random assignment within each block. For $R_i = 0$, we'll
+assign 3 datasets to treatment and 4 to control. For $R_i = 1$, we'll assign 11
+to treatment and 12 to control.
+
+The silly nature of the randomization here means we won't face noncompliance
+and that we are safe to assume excludability and non-interference. However, we
+may face an issue of attrition, with models failing to train in time or failing
+to converge at all. This may correlate with potential outcomes, as datasets
+with smaller potential classification accuracies $Y_i(z)$ may be harder to train on,
+meaning we have a higher chance of attrition among those datasets. We discuss
+how to respond to this in the following section.
+
+\subsection*{Analysis}
+For this experiment, I'm primarily interested in the average treatment effect
+\[
+    \mathbb{E}[Y_i(1) - Y_i(0)]
+,\] 
+which I'll estimate using the block-adjusted difference-in-means estimator.
+However, we also have access to the \emph{log image size} covariate, $S_i$.
+Generally the larger the image, the harder the classification task—so I'd like
+to adjust for $S_i$ as well.
+
+To compute an ATE estimate using both a blocking indicator $R_i$ and a covariate $S_i$ , we
+will use weighted regression of the form
+\[
+    Y_i \sim \alpha + \beta z_i + \gamma \log(S_i)
+.\] 
+We transform the image size $S_i$ into logarithm scale before the regression,
+as a one-unit difference on the log scale is more meaningful and consistent
+across a variety of scales.
+
+We will need to use a weighted regression since the treatment assignment
+probabilities per block are not exactly the same. The weights for this
+regression are given by equation 4.12 in
+\cite{gerberFieldExperimentsDesign2012}: the weight for subject $i$ in block
+$j$ is given by
+\[
+    w_{ij} = \frac{1}{p_{ij}}z_i + (\frac{1}{1- p_{ij}})(1 - z_i)
+,\] 
+where $p_{ij}$ is the probability that subject $i$ within block $j$ was
+assigned to treatment.
+
+I hypothesize no treatment effect. I'll test this hypothesis using
+the linear regression analysis, using a two-tailed test on the coefficient
+representing our estimate $\hat{\beta}$.
+
+As discussed previously, we face a potential challenge of attrition here, with
+missing data likely being correlated with potential outcomes $Y_i(z)$. If
+attrition occurs, we will conduct the above analysis among the results that we
+do have, the Always-Reporters. We won't attempt any of the correction methods,
+since the introduction of randomness may already add too much noise to discern
+any true performance differences. If attrition does occur, we leave it to a
+follow-up study to retry the outcome measurement on the subjects, relying on
+the nature of our problem to assume that these will return the same potential
+outcomes.
+
+\newpage
+
+\bibliography{references}
 \newpage
 
 \section*{Appendix}
@@ -91,5 +215,24 @@ train on, like the aforementioned \ImageNet dataset.
 
 \section*{Code}
 
+First, here is the code to generate random assignments.
+
+\lstinputlisting[
+    language=R,
+    style=R,
+    caption={Randomization code, from \texttt{randomization.R}},
+    label={lst:randomization}
+]{../analysis/randomization.R}
+
+\newpage
+
+Here is the code for the regression analysis.
+
+\lstinputlisting[
+    language=R,
+    style=R,
+    caption={Analysis code, from \texttt{main.R}},
+    label={lst:analysis}
+]{../analysis/main.R}
 
 \end{document}
