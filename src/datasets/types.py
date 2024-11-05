@@ -39,7 +39,73 @@ DEFAULT_SPLIT_NAMES = {
 
 @dataclass
 class DatasetConfig:
-    """Configuration for how to load different splits of a dataset."""
+    """
+    Configuration for handling dataset splits and their parameters.
+    
+    This class handles the translation between standard split types (TRAIN/TEST/VAL/FULL) 
+    and dataset-specific parameters. It supports three main patterns for how datasets
+    specify their splits:
+    
+    1. Using a 'split' parameter with names (e.g., split="train", split="test")
+    2. Using a train boolean (e.g., train=True, train=False)
+    3. Using custom parameters (e.g., background=True/False for Omniglot)
+    
+    For most datasets, you should use one of the class methods to create configurations:
+        - with_split_names(): For datasets using split="train"/"test"
+        - with_train_param(): For datasets using train=True/False
+    
+    Only use direct construction for datasets with custom split parameters.
+    
+    Args:
+        available_splits: What splits the dataset provides natively (e.g., TRAIN_TEST)
+        split_params: How to translate splits to dataset parameters. If None, defaults
+            to standard split names based on available_splits.
+        supports_download: Whether the dataset supports automatic download
+        extra_params: Additional parameters needed for dataset construction
+    
+    Examples:
+        >>> # Dataset with standard split names (e.g., StanfordCars):
+        >>> config = DatasetConfig.with_split_names(AvailableSplits.TRAIN_TEST)
+        >>> config.get_kwargs(Split.TRAIN)
+        {'split': 'train'}
+        
+        >>> # Dataset with custom split names (e.g., Places365):
+        >>> config = DatasetConfig.with_split_names(
+        ...     AvailableSplits.TRAIN_TEST,
+        ...     names={Split.TRAIN: "train-standard"}
+        ... )
+        >>> config.get_kwargs(Split.TRAIN)
+        {'split': 'train-standard'}
+        
+        >>> # Dataset using train boolean (e.g., MNIST):
+        >>> config = DatasetConfig.with_train_param()
+        >>> config.get_kwargs(Split.TRAIN)
+        {'train': True}
+        
+        >>> # Dataset with custom parameters (e.g., Omniglot):
+        >>> config = DatasetConfig(
+        ...     available_splits=AvailableSplits.TRAIN_TEST,
+        ...     split_params={
+        ...         "background": {
+        ...             Split.TRAIN: True,
+        ...             Split.TEST: False
+        ...         }
+        ...     }
+        ... )
+        >>> config.get_kwargs(Split.TRAIN)
+        {'background': True}
+        
+        >>> # Dataset with no splits (e.g., EuroSAT):
+        >>> config = DatasetConfig(available_splits=AvailableSplits.NONE)
+        >>> config.get_kwargs(Split.FULL)
+        {}
+    
+    Notes:
+        - The FULL split is special - it never gets split parameters
+        - For datasets with AvailableSplits.NONE, split_params defaults to empty
+        - For other datasets, split_params defaults to standard split names
+        - VAL splits will be created from TRAIN by get_dataset() if not native
+    """
     available_splits: AvailableSplits
     split_params: Dict[str, Dict[Split, Any]] = field(default_factory=dict)
     supports_download: bool = True
@@ -88,7 +154,8 @@ class DatasetConfig:
         name_overrides: Optional[Dict[Split, str]] = None,
         **kwargs
     ) -> 'DatasetConfig':
-        """Create config for dataset using split names.
+        """
+        Create config for dataset using split names.
         
         Most datasets use standard names for their splits:
           - TRAIN split uses "train"
@@ -146,7 +213,8 @@ class DatasetConfig:
 
     @classmethod
     def with_train_param(cls, **kwargs) -> 'DatasetConfig':
-        """Create config for dataset using train=True/False.
+        """
+        Create config for dataset using train=True/False.
         
         Example:
             >>> config = DatasetConfig.with_train_param(
@@ -163,77 +231,3 @@ class DatasetConfig:
             },
             **kwargs
         )
-
-# @dataclass
-# class DatasetConfig:
-#     """
-#     Configuration for how to load different splits of a dataset.
-#     
-#     There are three ways datasets typically handle splits:
-#     1. Using a 'split' parameter with names like "train"/"test"
-#     2. Using a train=True/False parameter
-#     3. Using custom parameters specific to that dataset
-#     
-#     Args:
-#         available_splits: What splits the dataset natively provides
-#         supports_download: Whether the dataset supports automatic download
-#         uses_train_param: Dataset uses train=True/False instead of split names
-#         split_names: Maps our Split enum to dataset-specific split names
-#         split_params: Maps our Split enum to dataset-specific parameters
-#         extra_params: Additional parameters needed for dataset construction
-#     
-#     Examples:
-#         # Standard dataset using split names:
-#         DatasetConfig(
-#             available_splits=AvailableSplits.TRAIN_TEST,
-#             split_names={Split.TRAIN: "train-standard", Split.TEST: "test"}
-#         )
-#         
-#         # Dataset using train=True/False:
-#         DatasetConfig(
-#             available_splits=AvailableSplits.TRAIN_TEST,
-#             uses_train_param=True
-#         )
-#         
-#         # Omniglot's custom background parameter:
-#         DatasetConfig(
-#             available_splits=AvailableSplits.TRAIN_TEST,
-#             split_params={
-#                 "background": {  # Parameter name
-#                     Split.TRAIN: True,   # For training set
-#                     Split.TEST: False    # For test set
-#                 }
-#             }
-#         )
-#     """
-#     available_splits: AvailableSplits
-#     supports_download: bool = True
-#     uses_train_param: bool = False  # Whether dataset uses train=True/False kwarg
-#     split_names: Dict[Split, str] = field(default_factory=dict)
-#     split_params: Dict[str, Dict[Split, Any]] = field(default_factory=dict)
-#     extra_params: Dict[str, Any] = field(default_factory=dict)
-#
-#     def __post_init__(self):
-#         """Merge provided split_names with defaults after initialization"""
-#         # Create a new dict with defaults
-#         merged_names = DEFAULT_SPLIT_NAMES.copy()
-#         # Update with any custom names provided
-#         merged_names.update(self.split_names)
-#         # Replace the split_names with merged version
-#         self.split_names = merged_names
-#
-#     def get_kwargs(self, split: Split) -> Dict[str, Any]:
-#         """Get the kwargs needed to request this split from the dataset"""
-#         if split == Split.FULL:
-#             return self.extra_params
-#
-#         if self.uses_train_param:
-#             return {"train": split == Split.TRAIN, **self.extra_params}
-#             
-#         return {"split": self.split_names[split], **self.extra_params}
-#
-#     def has_split(self, split: Split) -> bool:
-#         """Whether this split is natively available"""
-#         if split == Split.FULL:
-#             return self.available_splits == AvailableSplits.NONE
-#         return split in self.available_splits.value
