@@ -98,9 +98,6 @@ class FlexibleViT(nn.Module):
         pos_embed = pretrained.encoder.pos_embedding
         pos_embed_new = interpolate_pos_embed(pos_embed, n_patches_new)
         self.register_buffer('pos_embed', pos_embed_new)
-
-        # Add a class token
-        self.class_token = nn.Parameter(torch.zeros(1, 1, hidden_dim))
         
         # Create new encoder with same architecture
         self.encoder = torchvision.models.vision_transformer.Encoder(
@@ -128,7 +125,7 @@ class FlexibleViT(nn.Module):
         # Dropout
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def get_features(self, x: torch.Tensor) -> torch.Tensor:
         # Create patches
         x = self.patch_embed(x)  # B, C, H, W
         
@@ -150,8 +147,9 @@ class FlexibleViT(nn.Module):
         
         # Get CLS token output
         x = x[:, 0]
-            
-        # Classification head
-        x = self.head(x)
-        
+
         return x
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Get features before classification layer (512-dim)."""
+        return self.head(self.get_features(x))

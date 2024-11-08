@@ -209,21 +209,18 @@ def test_large_sequence_warning():
         )
 
 @pytest.mark.parametrize(
-    "dataset_name,image_size,patch_size,num_classes",
+    "dataset_name,patch_size,num_classes",
     [
-        ("MNIST", (28, 28), 4, 10),  # Small images
-        ("Imagenette", (224, 224), 16, 10),  # Standard ImageNet size
+        ("MNIST", 4, 10),
+        ("Imagenette", 16, 10), 
     ]
 )
-def test_model_forward(dataset_name, image_size, patch_size, num_classes, device):
+def test_model_forward(dataset_name, patch_size, num_classes, device):
     """Test that model can process images from different datasets."""
     # Load dataset
     try:
-        dataset = get_dataset(
-            dataset_name,
-            Split.TRAIN,
-            transform=T.Grayscale(3) if dataset_name == "MNIST" else None,
-        )
+        dataset = get_dataset(dataset_name, Split.TRAIN)
+        image_size = dataset[0][0].shape[1:]
     except FileNotFoundError as e:
         pytest.skip(f"Dataset {dataset_name} not found: {e}")
     
@@ -233,10 +230,11 @@ def test_model_forward(dataset_name, image_size, patch_size, num_classes, device
         patch_size=patch_size,
         num_classes=num_classes
     ).to(device)
+
     model.eval()
     
     # Get a small batch of data
-    batch_size = 4
+    batch_size = 8
     dataloader = torch.utils.data.DataLoader(
         dataset, 
         batch_size=batch_size, 
