@@ -35,9 +35,12 @@ def generate_latex_table(csv_path, output_path):
     """Generate LaTeX table from CSV file using pandas Styler"""
     # Read CSV
     df = pd.read_csv(csv_path)
-    
+
+    # Compute new standardized image size
+    df['Standardized Image Size'] = [f'{w}x{h}' for i, (w, h) in df[['standardized_width', 'standardized_height']].iterrows()]
+
     # Define desired column order (using new names)
-    column_order = ['Dataset', 'Task', 'Size', 'Num Classes', 'Average Image Size']
+    column_order = ['Dataset', 'Task', 'Size', 'Num Classes', 'Standardized Image Size']
     
     # Select original columns in the desired order
     df_selected = df[column_order]
@@ -88,7 +91,7 @@ if __name__ == '__main__':
     try:
         # Find project root and set up paths
         project_root = find_project_root()
-        csv_path = project_root / 'src' / 'datasets.csv'
+        csv_path = project_root / 'datasets.csv'
         output_path = project_root / 'doc' / 'generated' / 'dataset_table.tex'
         
         generate_latex_table(csv_path, output_path)

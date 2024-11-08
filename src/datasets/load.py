@@ -14,11 +14,12 @@ import hashlib
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Type, Union
 
+import pandas as pd
 import torch
-
 import torchvision
 
 from torch.utils.data import ConcatDataset, Dataset, Subset, random_split
+from torchvision import transforms
 from torchvision.datasets import VisionDataset
 
 from datasets.config import DATASET_CONFIGS
@@ -30,6 +31,10 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
 
 # Default data directory is under project root
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
+
+# Load dataset information once at module level
+DATASETS_INFO = pd.read_csv(PROJECT_ROOT / "datasets.csv")
+DATASETS_INFO.set_index('Dataset', inplace=True)
 
 
 def _get_split_seed(dataset_name: str, split: Split, base_seed: int) -> int:
@@ -82,6 +87,24 @@ def create_split(
     )
     return remain_data, split_data
 
+def get_transform_for_dataset(dataset_name: str, 
+                            additional_transform: Optional[Callable] = None) -> transforms.Compose:
+    """
+    Create a transform pipeline for a dataset including standardized resizing.
+    """
+    info = DATASETS_INFO.loc[dataset_name]
+    target_size = (int(info['standardized_width']), int(info['standardized_height']))
+    
+    transform_list = [
+        transforms.Resize(target_size),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))  # Can be made dataset-specific if needed
+    ]
+    
+    if additional_transform is not None:
+        transform_list.append(additional_transform)
+    
+    return transforms.Compose(transform_list)
 
 def get_dataset(
     dataset_name: str,
@@ -123,7 +146,7 @@ def get_dataset(
     # Common parameters supported across all dataset instantiations
     common_params = {
         "root": root,
-        "transform": transform,
+        "transform": get_transform_for_dataset(dataset_name, transform),
         "target_transform": target_transform,
     }
 

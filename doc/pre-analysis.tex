@@ -106,9 +106,13 @@ train on, like the aforementioned \ImageNet dataset.
 
 For each dataset, we have the following covariates: number of images, number of
 classes, and average image size. All are measured pre-treatment. Since images
-are often of different shapes, we'll define the computed covariate $S_i$ as
-average number of pixels in the image, which we compute by multiplying the
-width and height.
+are often of different shapes within a dataset but standardized sizes for each
+dataset is a requirement for modern deep learning algorithms, we standardize
+sizes as follows: We'll compute the average size of the images within a datset,
+round to the nearest multiple of 4, and resize all images within a dataset to
+that size. For larger images with more than 10,000 pixels, we round to the
+nearest multiple of 32. We'll define the computed covariate $S_i$ as the
+number of pixels in the standardized images for each dataset.
 
 
 \subsection*{Treatment}
