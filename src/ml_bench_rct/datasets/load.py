@@ -18,14 +18,18 @@ import pandas as pd
 import torch
 import torchvision
 
+from torch import nn
 from torch.utils.data import ConcatDataset, Subset, random_split
-from torchvision import transforms
+
+from torchvision import transforms as T
 from torchvision.datasets import VisionDataset
+from torchvision.transforms import InterpolationMode
 
 from ml_bench_rct import PROJECT_ROOT
 
-from ml_bench_rct.datasets.types import AvailableSplits, Split
+from ml_bench_rct.datasets.types import AvailableSplits, Split, DatasetConfig
 from ml_bench_rct.datasets.config import DATASET_CONFIGS
+from ml_bench_rct.datasets.transform import ChannelTransform
 
 # Default data directory is under project root
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
@@ -85,30 +89,107 @@ def create_split(
     )
     return remain_data, split_data
 
-def get_transform_for_dataset(dataset_name: str, 
-                            additional_transform: Optional[Callable] = None) -> transforms.Compose:
+# def get_transform_for_dataset(dataset_name: str, 
+#                             additional_transform: Optional[Callable] = None) -> transforms.Compose:
+#     """
+#     Create a transform pipeline for a dataset including standardized resizing.
+#     """
+#     info = DATASETS_INFO.loc[dataset_name]
+#     target_size = (int(info['standard_width_px']), int(info['standard_height_px']))
+#     
+#     transform_list = [
+#         transforms.Resize(target_size),
+#         transforms.ToTensor(),
+#         transforms.Normalize((0.5,), (0.5,))  # Can be made dataset-specific if needed
+#     ]
+#     
+#     if additional_transform is not None:
+#         transform_list.append(additional_transform)
+#         print(transform_list)
+#     
+#     return transforms.Compose(transform_list)
+
+def get_transform_for_dataset(
+    config: DatasetConfig,
+    target_size: Optional[Tuple[int, int]] = None,
+    transform: Optional[nn.Module] = None,
+) -> T.Compose:
     """
-    Create a transform pipeline for a dataset including standardized resizing.
+    Get transform pipeline for a specific dataset.
+
+    This creates a transform pipeline that:
+    1. Resizes images to target size if specified
+    2. Applies any user-provided transforms
+    3. Converts to tensor and handles channel normalization
+    4. Applies dataset-specific normalization
+    
+    Args:
+        dataset_name: Name of the dataset
+        config: Dataset configuration
+        split: Which split we're transforming
+        target_size: Optional (height, width) to resize to
+        transform: Optional user-provided transforms to include
+        
+    Returns:
+        Composed transform pipeline
+    
+    Example:
+        >>> # Basic usage
+        >>> transform = get_transform_for_dataset(
+        ...     'MNIST',
+        ...     config,
+        ...     Split.TRAIN,
+        ...     target_size=(224, 224)
+        ... )
+        
+        >>> # With custom transforms
+        >>> custom_transform = transforms.Compose([
+        ...     transforms.RandomHorizontalFlip(),
+        ...     transforms.ColorJitter(0.2, 0.2)
+        ... ])
+        >>> transform = get_transform_for_dataset(
+        ...     'MNIST',
+        ...     config,
+        ...     Split.TRAIN,
+        ...     transform=custom_transform
+        ... )
     """
-    info = DATASETS_INFO.loc[dataset_name]
-    target_size = (int(info['standard_width_px']), int(info['standard_height_px']))
+    transforms: list[Union[Callable, nn.Module, ChannelTransform]] = []
     
-    transform_list = [
-        transforms.Resize(target_size),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))  # Can be made dataset-specific if needed
-    ]
+    # 1. Resize if needed
+    if target_size is not None:
+        transforms.append(T.Resize(target_size, interpolation=InterpolationMode.BICUBIC))
+
+    # 2. Add user transforms if provided (before tensor conversion)
+    if transform is not None:
+        if isinstance(transform, (list, tuple)):
+            transforms.extend(transform)
+        elif isinstance(transform, T.Compose):
+            transforms.extend(transform.transforms)
+        else:
+            transforms.append(transform)
+
+    # 3. Convert to tensor (necessary for channel handling)
+    transforms.append(T.ToTensor())
     
-    if additional_transform is not None:
-        transform_list.append(additional_transform)
-    
-    return transforms.Compose(transform_list)
+    # 4. Handle channel count standardizing
+    transforms.append(ChannelTransform())
+
+    # 5. Normalization
+    # Use the imagenet normalization
+    transforms.append(T.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+        ))
+
+    return T.Compose(transforms)
+
 
 def get_dataset(
     dataset_name: str,
     split: Split = Split.FULL,
     root: Union[str, Path] = DEFAULT_DATA_DIR,
-    transform: Optional[Callable] = None,
+    transform: Optional[nn.Module] = None,
     target_transform: Optional[Callable] = None,
     download: bool = True,
     val_ratio: float = 0.1,
@@ -140,11 +221,13 @@ def get_dataset(
     config = DATASET_CONFIGS[dataset_name]
     dataset_cls: Type[VisionDataset] = getattr(torchvision.datasets, dataset_name)
 
+    info = DATASETS_INFO.loc[dataset_name]
+    target_size = (int(info['standard_width_px']), int(info['standard_height_px']))
 
     # Common parameters supported across all dataset instantiations
     common_params = {
         "root": root,
-        "transform": get_transform_for_dataset(dataset_name, transform),
+        "transform": get_transform_for_dataset(config, target_size, transform),
         "target_transform": target_transform,
     }
 
