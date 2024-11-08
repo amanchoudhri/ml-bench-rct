@@ -17,8 +17,8 @@ The main interface is through get_dataset(), which handles:
 - Proper handling of various dataset split configurations
 """
 
-from datasets.config import DATASET_CONFIGS
-from datasets.load import get_dataset
-from datasets.types import Split, AvailableSplits, DatasetConfig
+from ml_bench_rct.datasets.config import DATASET_CONFIGS
+from ml_bench_rct.datasets.load import get_dataset
+from ml_bench_rct.datasets.types import Split, AvailableSplits, DatasetConfig
 
 __all__ = ['Split', 'get_dataset', 'DATASET_CONFIGS']

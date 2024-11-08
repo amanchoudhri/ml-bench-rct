@@ -3,8 +3,16 @@ data
 
 # intermediate LaTeX files
 aux
+*.synctex.gz
 
-# Python files
+# Python interpreter files
 venv
 __pycache__
 
+# Python project files
+*.egg-info
+
+# R files/directories
+.Rproj.user
+.RData
+.RHistory

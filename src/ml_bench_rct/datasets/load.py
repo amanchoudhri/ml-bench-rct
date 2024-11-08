@@ -18,23 +18,21 @@ import pandas as pd
 import torch
 import torchvision
 
-from torch.utils.data import ConcatDataset, Dataset, Subset, random_split
+from torch.utils.data import ConcatDataset, Subset, random_split
 from torchvision import transforms
 from torchvision.datasets import VisionDataset
 
-from datasets.config import DATASET_CONFIGS
-from datasets.types import AvailableSplits, Split
+from ml_bench_rct import PROJECT_ROOT
 
-
-# Get project root directory (2 levels up from this file)
-PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+from ml_bench_rct.datasets.types import AvailableSplits, Split
+from ml_bench_rct.datasets.config import DATASET_CONFIGS
 
 # Default data directory is under project root
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 
 # Load dataset information once at module level
 DATASETS_INFO = pd.read_csv(PROJECT_ROOT / "datasets.csv")
-DATASETS_INFO.set_index('Dataset', inplace=True)
+DATASETS_INFO.set_index('dataset_name', inplace=True)
 
 
 def _get_split_seed(dataset_name: str, split: Split, base_seed: int) -> int:
@@ -93,7 +91,7 @@ def get_transform_for_dataset(dataset_name: str,
     Create a transform pipeline for a dataset including standardized resizing.
     """
     info = DATASETS_INFO.loc[dataset_name]
-    target_size = (int(info['standardized_width']), int(info['standardized_height']))
+    target_size = (int(info['standard_width_px']), int(info['standard_height_px']))
     
     transform_list = [
         transforms.Resize(target_size),

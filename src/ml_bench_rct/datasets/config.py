@@ -10,7 +10,7 @@ To add support for a new dataset, add it to the DATASET_CONFIGS dictionary
 with appropriate configuration.
 """
 
-from datasets.types import AvailableSplits, DatasetConfig, Split
+from ml_bench_rct.datasets.types import AvailableSplits, DatasetConfig, Split
 
 # Dataset configurations
 DATASET_CONFIGS = {

@@ -14,9 +14,7 @@ repo_root = Path(__file__).parent.parent
 src_path = repo_root / "src"
 sys.path.append(str(src_path))
 
-from datasets import get_dataset, Split, DATASET_CONFIGS
-
-ROOT = Path('~/aman/classes/snr-1/experiments/practicum/src/data').expanduser()
+from ml_bench_rct.datasets import get_dataset, Split, DATASET_CONFIGS
 
 
 class SizeExtractionDataset(Dataset):
