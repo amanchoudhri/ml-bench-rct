@@ -37,9 +37,17 @@ def generate_latex_table(csv_path, output_path):
     df = pd.read_csv(csv_path)
 
     # Compute new standardized image size
-    df['Standardized Image Size'] = [f'{w}x{h}' for i, (w, h) in df[['standardized_width', 'standardized_height']].iterrows()]
+    df['Standardized Image Size'] = [f'{w}x{h}' for i, (w, h) in df[['standard_width_px', 'standard_height_px']].iterrows()]
 
     # Define desired column order (using new names)
+    rename = {
+        'dataset_name': 'Dataset',
+        'task_type': 'Task',
+        'total_samples': 'Size',
+        'num_classes': 'Num Classes',
+        }
+    df = df.rename(columns=rename)
+
     column_order = ['Dataset', 'Task', 'Size', 'Num Classes', 'Standardized Image Size']
     
     # Select original columns in the desired order
@@ -48,7 +56,7 @@ def generate_latex_table(csv_path, output_path):
     # Apply hyperlinks to dataset names
     df_selected = df_selected.sort_values(by='Dataset')
     df_selected['Dataset'] = df.apply(
-        lambda x: format_dataset_name(x['Dataset'], x['Link']), 
+        lambda x: format_dataset_name(x['Dataset'], x['source_url']), 
         axis=1
     )
     df_selected.set_index('Dataset', inplace=True)
