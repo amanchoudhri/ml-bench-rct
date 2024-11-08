@@ -25,10 +25,12 @@ The central research question explores whether this randomized approach could be
 
 ```
 .
-├── analysis/    # R code for randomization and experimental analysis
-├── doc/         # Documentation and pre-analysis plan
-├── src/         # Python implementation of dataset loading and model training
-└── tools/       # One-off utility scripts for dataset preparation
+├── doc/                   # PDFs and LaTeX source for pre-analysis plan and final report
+├── src/                   # Source code
+│   ├── analysis/          # R scripts for randomization and analysis
+│   └── ml_bench_rct/      # Python package for model training and evaluation
+├── tests/                 # Unit tests
+└── tools/                 # Utility scripts for dataset preparation
 ```
 
 ## Further Reading
